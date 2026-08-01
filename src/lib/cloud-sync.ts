@@ -245,12 +245,13 @@ export async function handleAuthChange(userId: string | null) {
 
   const before = useStore.getState();
   const prevScopedUserId = before.scopedUserId;
-  const localCart = before.cart;
-  const localFavorites = before.favorites;
 
-  // 👈 ЕСЛИ ЭТО ТОТ ЖЕ САМЫЙ ПОЛЬЗОВАТЕЛЬ (например, сворачивание вкладки или повторный фокус),
-  // мы НЕ делаем повторный merge локального с облаком, чтобы товары не удваивались!
-  const isSameUserReconnect = prevScopedUserId === userId && userId !== null;
+  // 🔴 БЛОКИРУЕМ ПОВТОРНЫЙ СИНХРОН ПРИ СВОРАЧИВАНИИ/ФОКУСЕ:
+  // Если пользователь уже вошел и это тот же самый userId, ничего не делаем вообще! 
+  // Локальная корзина в Zustand останется неприкосновенной.
+  if (prevScopedUserId === userId && userId !== null) {
+    return;
+  }
 
   // Suspend pushes/realtime while we transition
   activeUserId = null;
@@ -267,20 +268,12 @@ export async function handleAuthChange(userId: string | null) {
   let finalFavorites = cloud.favorites;
   let needsPush = false;
 
-  // Если это повторный коннект того же пользователя, доверяем тому, что уже есть в стейте/облаке, 
-  // без агрессивного повторного мерджа (чтобы избежать дублей).
-  if (isSameUserReconnect) {
-    // Просто берем то, что в стейте, если там что-то есть, или облачное
-    finalCart = localCart.length > 0 ? localCart : cloud.cart;
-    finalFavorites = localFavorites.length > 0 ? localFavorites : cloud.favorites;
-  } else {
-    // Первый вход (гость стал пользователем или первая загрузка)
-    const shouldMergeLocal = prevScopedUserId === null;
-    if (shouldMergeLocal && (localCart.length > 0 || localFavorites.length > 0)) {
-      finalCart = mergeCarts(localCart, cloud.cart);
-      finalFavorites = Array.from(new Set([...cloud.favorites, ...localFavorites]));
-      needsPush = true;
-    }
+  // Слияние происходит ТОЛЬКО при самом первом входе (когда scopedUserId был null)
+  const shouldMergeLocal = prevScopedUserId === null;
+  if (shouldMergeLocal && (before.cart.length > 0 || before.favorites.length > 0)) {
+    finalCart = mergeCarts(before.cart, cloud.cart);
+    finalFavorites = Array.from(new Set([...cloud.favorites, ...before.favorites]));
+    needsPush = true;
   }
 
   hydrate(finalCart, finalFavorites);
@@ -292,7 +285,6 @@ export async function handleAuthChange(userId: string | null) {
     void reconcileFavorites(userId, finalFavorites);
   }
 }
-
 
 
 
