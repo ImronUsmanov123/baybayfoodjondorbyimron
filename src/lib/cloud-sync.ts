@@ -236,6 +236,10 @@ export function initCloudSync() {
  * sign-in or same-user reconnect, merges) the user's cloud cart/favorites,
  * and opens a realtime subscription so other devices' changes show up here.
  */
+
+
+
+
 export async function handleAuthChange(userId: string | null) {
   const myToken = ++authChangeToken;
 
@@ -243,32 +247,40 @@ export async function handleAuthChange(userId: string | null) {
   const prevScopedUserId = before.scopedUserId;
   const localCart = before.cart;
   const localFavorites = before.favorites;
-  // Local data is safe to merge in when it's this same account's cache
-  // (reconnect/reload) or nobody's yet (guest → signed in). A switch to a
-  // *different* known account must never leak the previous customer's
-  // basket, so we don't merge there — store.syncAccount below wipes it.
-  const shouldMergeLocal = prevScopedUserId === null || prevScopedUserId === userId;
 
-  // Suspend pushes/realtime while we transition so the wipe below (or the
-  // pull that follows) can never be mistaken for a real local edit.
+  // 👈 ЕСЛИ ЭТО ТОТ ЖЕ САМЫЙ ПОЛЬЗОВАТЕЛЬ (например, сворачивание вкладки или повторный фокус),
+  // мы НЕ делаем повторный merge локального с облаком, чтобы товары не удваивались!
+  const isSameUserReconnect = prevScopedUserId === userId && userId !== null;
+
+  // Suspend pushes/realtime while we transition
   activeUserId = null;
   teardownChannel();
 
   useStore.getState().syncAccount(userId);
 
-  if (!userId) return; // signed out — nothing left to sync
+  if (!userId) return; // signed out
 
   const cloud = await fetchCloudState(userId);
-  if (myToken !== authChangeToken) return; // a newer auth change superseded this one
+  if (myToken !== authChangeToken) return;
 
   let finalCart = cloud.cart;
   let finalFavorites = cloud.favorites;
   let needsPush = false;
 
-  if (shouldMergeLocal && (localCart.length > 0 || localFavorites.length > 0)) {
-    finalCart = mergeCarts(localCart, cloud.cart);
-    finalFavorites = Array.from(new Set([...cloud.favorites, ...localFavorites]));
-    needsPush = true;
+  // Если это повторный коннект того же пользователя, доверяем тому, что уже есть в стейте/облаке, 
+  // без агрессивного повторного мерджа (чтобы избежать дублей).
+  if (isSameUserReconnect) {
+    // Просто берем то, что в стейте, если там что-то есть, или облачное
+    finalCart = localCart.length > 0 ? localCart : cloud.cart;
+    finalFavorites = localFavorites.length > 0 ? localFavorites : cloud.favorites;
+  } else {
+    // Первый вход (гость стал пользователем или первая загрузка)
+    const shouldMergeLocal = prevScopedUserId === null;
+    if (shouldMergeLocal && (localCart.length > 0 || localFavorites.length > 0)) {
+      finalCart = mergeCarts(localCart, cloud.cart);
+      finalFavorites = Array.from(new Set([...cloud.favorites, ...localFavorites]));
+      needsPush = true;
+    }
   }
 
   hydrate(finalCart, finalFavorites);
@@ -276,9 +288,67 @@ export async function handleAuthChange(userId: string | null) {
   setupChannel(userId);
 
   if (needsPush) {
-    // Persist the merge result immediately rather than waiting on the
-    // debounce, so a second device opened right away already sees it.
     void reconcileCart(userId, finalCart);
     void reconcileFavorites(userId, finalFavorites);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// export async function handleAuthChange(userId: string | null) {
+//   const myToken = ++authChangeToken;
+
+//   const before = useStore.getState();
+//   const prevScopedUserId = before.scopedUserId;
+//   const localCart = before.cart;
+//   const localFavorites = before.favorites;
+//   // Local data is safe to merge in when it's this same account's cache
+//   // (reconnect/reload) or nobody's yet (guest → signed in). A switch to a
+//   // *different* known account must never leak the previous customer's
+//   // basket, so we don't merge there — store.syncAccount below wipes it.
+//   const shouldMergeLocal = prevScopedUserId === null || prevScopedUserId === userId;
+
+//   // Suspend pushes/realtime while we transition so the wipe below (or the
+//   // pull that follows) can never be mistaken for a real local edit.
+//   activeUserId = null;
+//   teardownChannel();
+
+//   useStore.getState().syncAccount(userId);
+
+//   if (!userId) return; // signed out — nothing left to sync
+
+//   const cloud = await fetchCloudState(userId);
+//   if (myToken !== authChangeToken) return; // a newer auth change superseded this one
+
+//   let finalCart = cloud.cart;
+//   let finalFavorites = cloud.favorites;
+//   let needsPush = false;
+
+//   if (shouldMergeLocal && (localCart.length > 0 || localFavorites.length > 0)) {
+//     finalCart = mergeCarts(localCart, cloud.cart);
+//     finalFavorites = Array.from(new Set([...cloud.favorites, ...localFavorites]));
+//     needsPush = true;
+//   }
+
+//   hydrate(finalCart, finalFavorites);
+//   activeUserId = userId;
+//   setupChannel(userId);
+
+//   if (needsPush) {
+//     // Persist the merge result immediately rather than waiting on the
+//     // debounce, so a second device opened right away already sees it.
+//     void reconcileCart(userId, finalCart);
+//     void reconcileFavorites(userId, finalFavorites);
+//   }
+// }
