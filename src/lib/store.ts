@@ -154,14 +154,13 @@ function deduplicateCart(cart: CartItem[]): CartItem[] {
   for (const item of cart) {
     if (map.has(item.key)) {
       const existing = map.get(item.key)!;
-      map.set(item.key, { ...item, qty: Math.max(existing.qty, item.qty) });
+      map.set(item.key, { ...existing, qty: existing.qty + item.qty });
     } else {
       map.set(item.key, item);
     }
   }
   return Array.from(map.values());
 }
-
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
