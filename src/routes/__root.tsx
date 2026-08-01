@@ -71,6 +71,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Bay Bay Food — burger, fri, hot-dog va ichimliklar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      // 🚫 Запрет автоперевода (чтобы не ломался ввод кода):
+      { name: "google", content: "notranslate" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -94,7 +96,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     // The Telegram WebApp script sets CSS vars on <html> before hydration.
-    <html lang="uz" suppressHydrationWarning>
+    <html lang="uz" translate="no" className="notranslate" suppressHydrationWarning>
+
+    {/* <html lang="uz" suppressHydrationWarning> */}
+    
       <head>
         <HeadContent />
       </head>
