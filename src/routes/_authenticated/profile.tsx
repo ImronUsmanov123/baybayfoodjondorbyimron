@@ -285,11 +285,13 @@ function EditProfile({
 }) {
   const { t } = useT();
   const saveProfile = useServerFn(updateMyProfile);
-  const mut = useMutation({
+const mut = useMutation({
     mutationFn: (values: Record<string, unknown>) => saveProfile({ data: values as any }),
     onSuccess: (_data, variables) => onSaved((variables as any).language as Lang),
+    onError: (error) => {
+      console.error("Ошибка обновления профиля:", error);
+    },
   });
-
   const [form, setForm] = useState({
     username: profile.username ?? "",
     first_name: profile.first_name ?? "",
@@ -313,14 +315,6 @@ const submit = (e: React.FormEvent) => {
     phone: form.phone.trim() ? form.phone : null,
     address: form.address || null,
     language: form.language,
-  }, {
-    onSuccess: () => {
-      // Здесь код, который выполнится сразу после успешного сохранения:
-      console.log("Данные успешно обновились в интерфейсе!");
-      
-      // Если у тебя есть функция перезагрузки данных (например, refetch или loadProfile), вызови её здесь:
-      // refetch();
-    }
   });
 };
 
