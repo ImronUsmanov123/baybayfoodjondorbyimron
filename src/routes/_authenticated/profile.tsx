@@ -304,28 +304,26 @@ function EditProfile({
 
   const phoneOk = form.phone.trim() === "" || form.phone.replace(/\D/g, "").length <= 3 || isValidUzPhone(form.phone);
 
-
 const submit = (e: React.FormEvent) => {
   e.preventDefault();
-  mut.mutate(
-    {
-      username: form.username || null,
-      first_name: form.first_name || null,
-      last_name: form.last_name || null,
-      phone: form.phone.trim() ? form.phone : null,
-      address: form.address || null,
-      language: form.language,
-    },
-    {
-      onError: (err) => {
-        console.error("ОШИБКА СОХРАНЕНИЯ ПРОФИЛЯ:", err);
-      },
-      onSuccess: (data) => {
-        console.log("УСПЕШНО СОХРАНЕНО:", data);
-      },
+  mut.mutate({
+    username: form.username || null,
+    first_name: form.first_name || null,
+    last_name: form.last_name || null,
+    phone: form.phone.trim() ? form.phone : null,
+    address: form.address || null,
+    language: form.language,
+  }, {
+    onSuccess: () => {
+      // Здесь код, который выполнится сразу после успешного сохранения:
+      console.log("Данные успешно обновились в интерфейсе!");
+      
+      // Если у тебя есть функция перезагрузки данных (например, refetch или loadProfile), вызови её здесь:
+      // refetch();
     }
-  );
+  });
 };
+
   // const submit = (e: React.FormEvent) => {
   //   e.preventDefault();
   //   if (!phoneOk) return;
