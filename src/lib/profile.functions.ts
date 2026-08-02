@@ -69,11 +69,24 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ context, data }) => {
+.handler(async ({ context, data }) => {
     const patch = Object.fromEntries(
       Object.entries(data).filter(([, v]) => v !== undefined),
     ) as typeof data;
 
+    console.log("[updateMyProfile] userId:", context.userId, "patch:", patch);
+
+    const { error, data: row } = await context.supabase
+      .from("profiles")
+      .upsert({ ...patch, id: context.userId }, { onConflict: "id" })
+      .select("*")
+      .maybeSingle();
+
+    console.log("[updateMyProfile] error:", error, "row:", row);
+
+    if (error) throw new Error(error.message);
+    return row;
+  });
     // Upsert, not update: a profile row can be missing (e.g. the account was
     // created before the trigger existed), and a plain UPDATE would silently
     // affect zero rows and look like "saving does nothing".

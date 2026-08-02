@@ -286,12 +286,12 @@ function EditProfile({
   const { t } = useT();
   const saveProfile = useServerFn(updateMyProfile);
 const mut = useMutation({
-    mutationFn: (values: Record<string, unknown>) => saveProfile({ data: values as any }),
-    onSuccess: (_data, variables) => onSaved((variables as any).language as Lang),
-    onError: (error) => {
-      console.error("Ошибка обновления профиля:", error);
-    },
-  });
+  mutationFn: (values: Record<string, unknown>) => saveProfile({ data: values as any }),
+  onSuccess: (_data, variables) => onSaved((variables as any).language as Lang),
+  onError: (error) => {
+    console.error("updateMyProfile failed:", error);
+  },
+});
   const [form, setForm] = useState({
     username: profile.username ?? "",
     first_name: profile.first_name ?? "",
@@ -308,6 +308,7 @@ const mut = useMutation({
 
 const submit = (e: React.FormEvent) => {
   e.preventDefault();
+  if (!phoneOk) return;
   mut.mutate({
     username: form.username || null,
     first_name: form.first_name || null,
