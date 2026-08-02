@@ -306,9 +306,10 @@ function EditProfile({
 
 
 
-  const submit = (e: React.FormEvent) => {
+const submit = (e: React.FormEvent) => {
     e.preventDefault();
     mut.mutate({
+      id: profile.id, // <--- ОБЯЗАТЕЛЬНО ДОБАВЬ СЮДА ID
       username: form.username || null,
       first_name: form.first_name || null,
       last_name: form.last_name || null,
