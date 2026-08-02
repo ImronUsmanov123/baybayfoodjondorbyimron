@@ -307,16 +307,25 @@ function EditProfile({
 
 const submit = (e: React.FormEvent) => {
   e.preventDefault();
-  mut.mutate({
-    username: form.username || null,
-    first_name: form.first_name || null,
-    last_name: form.last_name || null,
-    phone: form.phone.trim() ? form.phone : null,
-    address: form.address || null,
-    language: form.language,
-  });
+  mut.mutate(
+    {
+      username: form.username || null,
+      first_name: form.first_name || null,
+      last_name: form.last_name || null,
+      phone: form.phone.trim() ? form.phone : null,
+      address: form.address || null,
+      language: form.language,
+    },
+    {
+      onError: (err) => {
+        console.error("ОШИБКА СОХРАНЕНИЯ ПРОФИЛЯ:", err);
+      },
+      onSuccess: (data) => {
+        console.log("УСПЕШНО СОХРАНЕНО:", data);
+      },
+    }
+  );
 };
-
   // const submit = (e: React.FormEvent) => {
   //   e.preventDefault();
   //   if (!phoneOk) return;
