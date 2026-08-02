@@ -305,19 +305,17 @@ function EditProfile({
   const phoneOk = form.phone.trim() === "" || form.phone.replace(/\D/g, "").length <= 3 || isValidUzPhone(form.phone);
 
 
-
 const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    mut.mutate({
-      id: profile.id, // <--- ОБЯЗАТЕЛЬНО ДОБАВЬ СЮДА ID
-      username: form.username || null,
-      first_name: form.first_name || null,
-      last_name: form.last_name || null,
-      phone: form.phone.trim() ? form.phone : null,
-      address: form.address || null,
-      language: form.language,
-    });
-  };
+  e.preventDefault();
+  mut.mutate({
+    username: form.username || null,
+    first_name: form.first_name || null,
+    last_name: form.last_name || null,
+    phone: form.phone.trim() ? form.phone : null,
+    address: form.address || null,
+    language: form.language,
+  });
+};
 
   // const submit = (e: React.FormEvent) => {
   //   e.preventDefault();
