@@ -177,7 +177,7 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       Object.entries(data).filter(([, v]) => v !== undefined),
     ) as typeof data;
  
-    console.log("[updateMyProfile] userId:", context.userId, "patch:", patch);
+   
  
     // Upsert, not update: a profile row can be missing (e.g. the account was
     // created before the trigger existed), and a plain UPDATE would silently
@@ -188,7 +188,7 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       .select("*")
       .maybeSingle();
  
-    console.log("[updateMyProfile] error:", error, "row:", row);
+  
  
     if (error) throw new Error(error.message);
     return row;

@@ -167,9 +167,10 @@ function AuthPage() {
           reset();
           setError(msg);
         } else if (res.status === "expired" || res.status === "consumed" || res.status === "not_found") {
-          setError(t("request_expired"));
-          reset();
-        }
+  const msg = t("request_expired");
+  reset();
+  setError(msg);
+}
       } catch {
         /* transient — keep polling */
       }

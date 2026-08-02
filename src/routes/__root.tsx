@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -99,7 +99,7 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="uz" translate="no" className="notranslate" suppressHydrationWarning>
 
     {/* <html lang="uz" suppressHydrationWarning> */}
-    
+
       <head>
         <HeadContent />
       </head>
@@ -114,12 +114,17 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const subRef = useRef<{ unsubscribe: () => void } | null>(null);
+
   useEffect(() => { initTelegram(); }, []);
+
   useEffect(() => {
-    let mounted = false;
+    let cancelled = false;
     initCloudSync();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     import("@/integrations/supabase/client").then(({ supabase }) => {
+      if (cancelled) return;
+
       // Whatever account is active when the app boots, make sure the
       // persisted cart/favorites belong to that account (or to nobody), then
       // pull/merge that account's cloud cart & favorites.
@@ -135,11 +140,13 @@ function RootComponent() {
         router.invalidate();
         if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
       });
-      mounted = true;
-      (RootComponent as any)._sub = data.subscription;
+      subRef.current = data.subscription;
     });
+
     return () => {
-      if (mounted) (RootComponent as any)._sub?.unsubscribe();
+      cancelled = true;
+      subRef.current?.unsubscribe();
+      subRef.current = null;
     };
   }, [router, queryClient]);
   return (

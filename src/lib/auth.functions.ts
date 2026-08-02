@@ -342,7 +342,7 @@ export const verifyTelegramLogin = createServerFn({ method: "POST" })
       .maybeSingle();
 
     let userId = existingProfile?.id ?? null;
-    const isNewUser = !userId;                    // ← НОВАЯ СТРОКА
+    let isNewUser = !userId;                  // ← НОВАЯ СТРОКА
 
     if (!userId) {
       const created = await supabaseAdmin.auth.admin.createUser({
@@ -360,7 +360,7 @@ export const verifyTelegramLogin = createServerFn({ method: "POST" })
       });
       if (created.data?.user) {
         userId = created.data.user.id;
-      } else {
+      }  else {
         // Email already taken (profile row missing) — recover by listing.
         const list = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
         const existing = list.data?.users.find((u) => u.email === email);
@@ -369,6 +369,7 @@ export const verifyTelegramLogin = createServerFn({ method: "POST" })
           throw new Error("Could not create your account. Please try again.");
         }
         userId = existing.id;
+        isNewUser = false;
       }
     }
 

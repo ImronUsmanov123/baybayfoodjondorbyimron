@@ -7,14 +7,13 @@ export const MAX_RESENDS = 3;
 export const MAX_ATTEMPTS = 5;
 
 export function randomToken(len = 24): string {
-  const bytes = new Uint8Array(len);
+  const bytes = new Uint8Array(Math.ceil(len / 2));
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
-    .map((b) => b.toString(36))
+    .map((b) => b.toString(16).padStart(2, "0"))
     .join("")
     .slice(0, len);
 }
-
 export function randomCode(): string {
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);

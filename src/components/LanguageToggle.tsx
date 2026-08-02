@@ -68,11 +68,11 @@ export function LanguageToggle({ variant = "icon" }: { variant?: "icon" | "segme
         aria-expanded={open}
         className="h-11 px-3 rounded-full bg-surface shadow-card flex items-center gap-1.5 press"
       >
-        <Globe className="h-4.5 w-4.5 text-foreground" strokeWidth={2.5} />
+        <Globe className="h-[18px] w-[18px] text-foreground" strokeWidth={2.5} />
         <span className="text-xs font-black text-foreground">{current.short}</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-13 z-50 w-40 rounded-2xl bg-surface shadow-chunky p-1.5">
+       <div className="absolute right-0 top-[52px] z-50 w-40 rounded-2xl bg-surface shadow-chunky p-1.5">
           {LANGS.map((l) => (
             <button
               key={l.code}
