@@ -342,6 +342,7 @@ export const verifyTelegramLogin = createServerFn({ method: "POST" })
       .maybeSingle();
 
     let userId = existingProfile?.id ?? null;
+    const isNewUser = !userId;                    // ← НОВАЯ СТРОКА
 
     if (!userId) {
       const created = await supabaseAdmin.auth.admin.createUser({
@@ -377,8 +378,9 @@ export const verifyTelegramLogin = createServerFn({ method: "POST" })
         phone: row.phone,
         telegram_chat_id: row.chat_id,
         telegram_username: row.telegram_username,
-        first_name: row.telegram_first_name,
-        last_name: row.telegram_last_name,
+        ...(isNewUser
+          ? { first_name: row.telegram_first_name, last_name: row.telegram_last_name }
+          : {}),
       },
       { onConflict: "id" },
     );
