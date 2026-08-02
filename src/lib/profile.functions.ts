@@ -34,21 +34,34 @@ export const updateMyProfile = createServerFn({ method: "POST" })
         username: z.string().trim().max(40).optional().nullable(),
         first_name: z.string().trim().max(60).optional().nullable(),
         last_name: z.string().trim().max(60).optional().nullable(),
+
+
         phone: z
           .string()
           .trim()
           .max(24)
           .optional()
           .nullable()
-          .transform((v, ctx) => {
-            if (v === undefined || v === null || v === "") return v ?? null;
+          .transform((v) => {
+            if (!v || v === "+998" || v.replace(/\D/g, "").length <= 3) return null;
             const e164 = normalizeUzPhone(v);
-            if (!e164) {
-              ctx.addIssue({ code: "custom" as const, message: "Enter a valid number: +998 xx xxx xx xx" });
-              return z.NEVER;
-            }
-            return e164;
+            return e164 || null;
           }),
+        // phone: z
+        //   .string()
+        //   .trim()
+        //   .max(24)
+        //   .optional()
+        //   .nullable()
+        //   .transform((v, ctx) => {
+        //     if (v === undefined || v === null || v === "") return v ?? null;
+        //     const e164 = normalizeUzPhone(v);
+        //     if (!e164) {
+        //       ctx.addIssue({ code: "custom" as const, message: "Enter a valid number: +998 xx xxx xx xx" });
+        //       return z.NEVER;
+        //     }
+        //     return e164;
+        //   }),
         address: z.string().trim().max(280).optional().nullable(),
         language: z.enum(["uz", "ru"]).optional(),
         avatar_url: z.string().trim().max(500).optional().nullable(),
