@@ -246,12 +246,7 @@ export async function handleAuthChange(userId: string | null) {
   const before = useStore.getState();
   const prevScopedUserId = before.scopedUserId;
 
-  // 🔴 БЛОКИРУЕМ ПОВТОРНЫЙ СИНХРОН ПРИ СВОРАЧИВАНИИ/ФОКУСЕ:
-  // Если пользователь уже вошел и это тот же самый userId, ничего не делаем вообще! 
-  // Локальная корзина в Zustand останется неприкосновенной.
-  if (prevScopedUserId === userId && userId !== null) {
-    return;
-  }
+  const isSameUserReconnect = prevScopedUserId === userId && userId !== null;
 
   // Suspend pushes/realtime while we transition
   activeUserId = null;
@@ -268,12 +263,19 @@ export async function handleAuthChange(userId: string | null) {
   let finalFavorites = cloud.favorites;
   let needsPush = false;
 
-  // Слияние происходит ТОЛЬКО при самом первом входе (когда scopedUserId был null)
-  const shouldMergeLocal = prevScopedUserId === null;
-  if (shouldMergeLocal && (before.cart.length > 0 || before.favorites.length > 0)) {
-    finalCart = mergeCarts(before.cart, cloud.cart);
-    finalFavorites = Array.from(new Set([...cloud.favorites, ...before.favorites]));
-    needsPush = true;
+  if (isSameUserReconnect) {
+    // 🛡️ При возвращении того же пользователя берем локальную корзину, чтобы не было дублей,
+    // но позволяем облачным данным (профиль и т.д.) проходить дальше.
+    finalCart = before.cart;
+    finalFavorites = before.favorites;
+  } else {
+    // Первый вход (гость стал авторизованным)
+    const shouldMergeLocal = prevScopedUserId === null;
+    if (shouldMergeLocal && (before.cart.length > 0 || before.favorites.length > 0)) {
+      finalCart = mergeCarts(before.cart, cloud.cart);
+      finalFavorites = Array.from(new Set([...cloud.favorites, ...before.favorites]));
+      needsPush = true;
+    }
   }
 
   hydrate(finalCart, finalFavorites);
